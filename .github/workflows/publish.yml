@@ -1,17 +1,15 @@
-# Publishes to npm with a provenance statement when a version tag (0.1.0, 1.2.3, ...) is pushed.
-# n8n verifies only community nodes published from GitHub Actions with provenance (since 2026-05-01).
+# Publishes to npm with a provenance statement when a v<version> tag is pushed. The ampost repo's mirror
+# (scripts/mirror-public-repos.sh) pushes that tag when package.json gets a new version, so a release
+# is a version bump committed in ampost's public-repos/. Run it by hand on a tag to retry.
 #
-# Disabled until the repo has moved and the npm package exists: set the repository variable
-# NPM_PUBLISH_ENABLED to "true", and either configure npm trusted publishing for this workflow
-# (no secret) or add the NPM_TOKEN secret (a granular token for this package).
-#
-# Release: run `npm run release` locally. It lints, builds, bumps the version, updates the
-# changelog, commits, tags and pushes; the tag starts this workflow.
+# Off until the repository variable NPM_PUBLISH_ENABLED is "true". Auth: npm trusted publishing for
+# this workflow (no secret), or the NPM_TOKEN secret, needed for the first version because trusted
+# publishing is set up on a package that already exists.
 name: Publish to npm
 
 on:
   push:
-    tags: ['*.*.*']
+    tags: ["v*"]
   workflow_dispatch:
 
 permissions:
@@ -29,11 +27,31 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org
           cache: npm
-      - run: npm ci
-      - run: npm test
-      - name: Release with provenance
+      - name: npm 11 (trusted publishing)
+        run: npm install -g npm@11
+      - name: The tag matches package.json and the version is not on npm yet
+        id: version
         run: |
-          [ -n "$NPM_TOKEN" ] && npm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"
-          npm run release
+          name=$(node -p "require('./package.json').name")
+          version=$(node -p "require('./package.json').version")
+          if [ "$GITHUB_REF_TYPE" = tag ] && [ "$GITHUB_REF_NAME" != "v$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $version"
+            exit 1
+          fi
+          if npm view "$name@$version" version >/dev/null 2>&1; then
+            echo "::notice::$name@$version is already on npm"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.version.outputs.skip != 'true'
+        run: npm ci
+      - if: steps.version.outputs.skip != 'true'
+        run: npm run lint
+      - if: steps.version.outputs.skip != 'true'
+        run: npm test
+      - if: steps.version.outputs.skip != 'true'
+        run: npm run build
+      - if: steps.version.outputs.skip != 'true'
+        run: npm publish --provenance --access public
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          RELEASE_MODE: "true"
