@@ -67,6 +67,10 @@ and are not accepted by the REST API.
 | Analytics | Get Post Metrics | Metrics of published posts, one entry per account |
 | Analytics | Get Overview | Totals per account and overall for a date range |
 
+**Get Slots** outputs one item per slot. A queue with no slots (none set up, or none free with
+**Only Free Slots**) outputs no items, and n8n then skips every node after it. To keep the workflow
+going, turn on **Always Output Data** in the node's settings and check for an empty item next.
+
 **Create and Validate** take either fields or a raw JSON body (`Input Mode`, the body of
 [POST /api/posts](https://ampost.io/docs?ref=github)). With fields:
 

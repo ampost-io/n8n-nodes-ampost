@@ -192,6 +192,15 @@ export const queueOperations: INodeProperties[] = [
 
 export const queueFields: INodeProperties[] = [
 	{
+		// One item per slot: an empty queue outputs no items, and n8n then skips every node after this one.
+		displayName:
+			'Outputs one item per slot. When the queue has no slots (none set up, or none free with Only Free Slots), it outputs nothing and the nodes after it do not run. To continue anyway, turn on Always Output Data in this node\'s settings.',
+		name: 'emptyQueueNotice',
+		type: 'notice',
+		default: '',
+		displayOptions: showFor('queue', ['getSlots']),
+	},
+	{
 		...platformSetField,
 		required: true,
 		displayOptions: showFor('queue', ['getSlots']),
