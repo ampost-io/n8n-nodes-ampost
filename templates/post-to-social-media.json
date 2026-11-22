@@ -1,0 +1,126 @@
+{
+  "name": "Post to social media with Ampost",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Post to social media with Ampost\nPublishes one post to every platform you list, through the Ampost node.\n\n### Setup\n1. Install the **n8n-nodes-ampost** community node (Settings → Community nodes).\n2. Create an Ampost credential with an API key from ampost.io → Settings → API keys.\n3. In **Post content**, set `text` and `platforms` (comma-separated: bluesky, threads, linkedin, twitter, instagram, facebook, tiktok, youtube, pinterest, telegram, discord). Each needs a connected account in Ampost.\n4. Click **Test workflow**.\n\nThe Idempotency-Key makes a retried request post once. Swap **Run it** for any trigger.",
+        "height": 520,
+        "width": 420,
+        "color": 4
+      },
+      "id": "e6349483-5374-4352-a132-cecd394c310a",
+      "name": "About this workflow",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        -160
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "e81da8c3-03c3-4b5e-abc9-f00ce3efd022",
+      "name": "Run it",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "71ecc67a-a6ee-497b-a4f1-f5ed3c7a813d",
+              "name": "text",
+              "value": "Hello from n8n and Ampost!",
+              "type": "string"
+            },
+            {
+              "id": "1dff2cb1-5784-488f-a260-abc608d68519",
+              "name": "platforms",
+              "value": "bluesky,threads",
+              "type": "string"
+            },
+            {
+              "id": "e8402075-06a0-4a08-a9d1-ca6934c16963",
+              "name": "link",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bf858474-dc95-4b3a-aebe-12e0f7fd3481",
+      "name": "Post content",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "platforms": "={{ $json.platforms.split(',').map(p => p.trim()).filter(p => p) }}",
+        "text": "={{ $json.text }}",
+        "additionalFields": {
+          "idempotencyKey": "=n8n-{{ $execution.id }}-{{ $itemIndex }}",
+          "linkUrl": "={{ $json.link }}"
+        },
+        "platformOptions": {}
+      },
+      "id": "fe8e4a44-43bb-407a-a5e7-7fce7ab435e4",
+      "name": "Create post",
+      "type": "n8n-nodes-ampost.ampost",
+      "typeVersion": 1,
+      "position": [
+        480,
+        0
+      ],
+      "credentials": {
+        "ampostApi": {
+          "id": "ampostApiCredential",
+          "name": "Ampost account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    }
+  ],
+  "connections": {
+    "Run it": {
+      "main": [
+        [
+          {
+            "node": "Post content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post content": {
+      "main": [
+        [
+          {
+            "node": "Create post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

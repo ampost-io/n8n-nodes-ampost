@@ -1,0 +1,125 @@
+{
+  "name": "Slack alerts for failed posts and disconnected accounts with the Ampost Trigger",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Alerts for failed posts and disconnected accounts\nThe Ampost Trigger registers a signed webhook in Ampost when you activate the workflow and removes it when you deactivate it. Each failed post or account that needs reconnecting becomes a Slack message.\n\n### Setup\n1. Install the **n8n-nodes-ampost** community node (Settings → Community nodes).\n2. Create an Ampost credential with an API key from ampost.io → Settings → API keys. The key needs the `webhooks:write` scope.\n3. Add a Slack credential and pick the channel in **Send to Slack**.\n4. Activate the workflow. n8n must be reachable on a public https URL (n8n Cloud is).",
+        "height": 520,
+        "width": 420,
+        "color": 4
+      },
+      "id": "9c35cda2-2365-4ecc-afc8-a2b922d084ef",
+      "name": "About this workflow",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "events": [
+          "post.platform.failed",
+          "account.needs_reconnect",
+          "account.disconnected"
+        ]
+      },
+      "id": "3eadf0f6-3814-42d0-ae31-2f2ca947c0a5",
+      "name": "Ampost event",
+      "type": "n8n-nodes-ampost.ampostTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "credentials": {
+        "ampostApi": {
+          "id": "ampostApiCredential",
+          "name": "Ampost account"
+        }
+      },
+      "webhookId": "c1c797d7-8e49-4084-aef9-e232dfd164f8"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a52aa58d-88d9-456c-aa8d-586a71caf3da",
+              "name": "alert",
+              "type": "string",
+              "value": "={{ $json.type === 'post.platform.failed'\n  ? `A post failed on ${$json.data.platformPost.platform}: ${$json.data.platformPost.error?.message ?? 'unknown error'}\\n> ${($json.data.post.text || '').slice(0, 200)}`\n  : `Reconnect ${$json.data.account.platform} @${$json.data.account.username ?? ''} in Ampost to keep publishing: https://ampost.io/app` }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ddf352b5-5f5b-4b5a-a384-51586cd9a2db",
+      "name": "Write the alert",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list"
+        },
+        "text": "={{ $json.alert }}",
+        "otherOptions": {}
+      },
+      "id": "5de69c21-8f8d-4628-a9a5-5402a83853c2",
+      "name": "Send to Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        480,
+        0
+      ],
+      "credentials": {
+        "slackApi": {
+          "id": "slackCredential",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Ampost event": {
+      "main": [
+        [
+          {
+            "node": "Write the alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write the alert": {
+      "main": [
+        [
+          {
+            "node": "Send to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

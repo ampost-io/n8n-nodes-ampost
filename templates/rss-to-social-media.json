@@ -1,0 +1,92 @@
+{
+  "name": "RSS feed to every social account with Ampost",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## RSS feed to every social account\nEach new item of a feed (blog, podcast, changelog) becomes a post with its title and link.\n\n### Setup\n1. Install the **n8n-nodes-ampost** community node (Settings → Community nodes).\n2. Create an Ampost credential with an API key from ampost.io → Settings → API keys.\n3. Put your feed in **New feed item**.\n4. In **Share the item**, pick every platform in the **Platforms** list (it lists the platforms with a connected account).\n5. Activate the workflow. Only items published after activation are shared.\n\nThe Idempotency-Key comes from the item, so the same item never posts twice.",
+        "height": 520,
+        "width": 420,
+        "color": 4
+      },
+      "id": "3686a02e-8a48-408f-abce-903254507319",
+      "name": "About this workflow",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        },
+        "feedUrl": "https://example.com/feed.xml"
+      },
+      "id": "e9e20509-c1c5-4a16-ae3a-cb248782c05b",
+      "name": "New feed item",
+      "type": "n8n-nodes-base.rssFeedReadTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "platforms": [
+          "bluesky",
+          "threads"
+        ],
+        "text": "={{ $json.title }}",
+        "additionalFields": {
+          "idempotencyKey": "=rss-{{ ($json.guid || $json.link).hash('sha256').slice(0, 40) }}",
+          "linkUrl": "={{ /^https?:\\/\\//.test($json.link || '') ? $json.link : '' }}"
+        },
+        "platformOptions": {}
+      },
+      "id": "a22872b9-f1d2-4121-a2e3-84b007a62eec",
+      "name": "Share the item",
+      "type": "n8n-nodes-ampost.ampost",
+      "typeVersion": 1,
+      "position": [
+        240,
+        0
+      ],
+      "credentials": {
+        "ampostApi": {
+          "id": "ampostApiCredential",
+          "name": "Ampost account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    }
+  ],
+  "connections": {
+    "New feed item": {
+      "main": [
+        [
+          {
+            "node": "Share the item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

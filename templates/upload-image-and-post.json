@@ -1,0 +1,147 @@
+{
+  "name": "Upload an image to Ampost and post it to social media",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Upload an image and post it\nAny binary file in n8n (a download, an email attachment, a Google Drive file) can go into a post: **Upload to Ampost** uploads it and waits until Ampost has checked it, then **Create post** attaches it.\n\n### Setup\n1. Install the **n8n-nodes-ampost** community node (Settings → Community nodes).\n2. Create an Ampost credential with an API key from ampost.io → Settings → API keys.\n3. Replace **Download the image** with your file source, and pick the platforms in **Create post**.\n4. Click **Test workflow**.\n\nAccepted: JPEG, PNG, WebP, MP4, MOV and WebM.",
+        "height": 520,
+        "width": 420,
+        "color": 4
+      },
+      "id": "ebdb6572-1f6d-4e45-a5d6-22318c525b33",
+      "name": "About this workflow",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        -160
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "04d702ac-3649-4c6f-aa8c-8c8a555d11a1",
+      "name": "Run it",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://picsum.photos/1080/1080.jpg",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "d4c62f53-9e18-4429-a277-ef89e53a6ae6",
+      "name": "Download the image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "media",
+        "operation": "upload",
+        "binaryPropertyName": "data",
+        "options": {}
+      },
+      "id": "27601a98-75e3-4bc7-ab73-ed41428241af",
+      "name": "Upload to Ampost",
+      "type": "n8n-nodes-ampost.ampost",
+      "typeVersion": 1,
+      "position": [
+        480,
+        0
+      ],
+      "credentials": {
+        "ampostApi": {
+          "id": "ampostApiCredential",
+          "name": "Ampost account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "platforms": [
+          "bluesky",
+          "threads"
+        ],
+        "text": "Posted from n8n with an uploaded image",
+        "additionalFields": {
+          "idempotencyKey": "=upload-{{ $json.id }}",
+          "mediaJson": "={{ $json.files }}"
+        },
+        "platformOptions": {}
+      },
+      "id": "0bbcb8b5-e8ad-4ef7-a640-dd93ceee5480",
+      "name": "Create post",
+      "type": "n8n-nodes-ampost.ampost",
+      "typeVersion": 1,
+      "position": [
+        720,
+        0
+      ],
+      "credentials": {
+        "ampostApi": {
+          "id": "ampostApiCredential",
+          "name": "Ampost account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    }
+  ],
+  "connections": {
+    "Run it": {
+      "main": [
+        [
+          {
+            "node": "Download the image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download the image": {
+      "main": [
+        [
+          {
+            "node": "Upload to Ampost",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Ampost": {
+      "main": [
+        [
+          {
+            "node": "Create post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

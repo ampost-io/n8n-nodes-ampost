@@ -1,0 +1,92 @@
+{
+  "name": "Share each new YouTube video on social media with Ampost",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Share each new YouTube video\nWhen your channel uploads a public video, Ampost posts its title and link to your other accounts.\n\n### Setup\n1. Install the **n8n-nodes-ampost** community node (Settings → Community nodes).\n2. Create an Ampost credential with an API key from ampost.io → Settings → API keys.\n3. In **New video**, replace `YOUR_CHANNEL_ID` with your channel ID (youtube.com → Settings → Advanced settings, starts with `UC`).\n4. Pick the platforms and edit the text in **Share the video**.\n5. Activate the workflow.\n\nYouTube updates the feed a few minutes after the video goes public.",
+        "height": 520,
+        "width": 420,
+        "color": 4
+      },
+      "id": "125128f2-db0f-48e4-a8f5-d0483ead6bc3",
+      "name": "About this workflow",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        },
+        "feedUrl": "https://www.youtube.com/feeds/videos.xml?channel_id=YOUR_CHANNEL_ID"
+      },
+      "id": "f85a07cf-9375-48df-a917-4bf866f4031c",
+      "name": "New video",
+      "type": "n8n-nodes-base.rssFeedReadTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "platforms": [
+          "bluesky",
+          "threads"
+        ],
+        "text": "=New video: {{ $json.title }}",
+        "additionalFields": {
+          "idempotencyKey": "=youtube-{{ ($json.id || $json.link).hash('sha256').slice(0, 40) }}",
+          "linkUrl": "={{ $json.link }}"
+        },
+        "platformOptions": {}
+      },
+      "id": "de029aee-fe2d-46c6-a192-9a670cd81a4c",
+      "name": "Share the video",
+      "type": "n8n-nodes-ampost.ampost",
+      "typeVersion": 1,
+      "position": [
+        240,
+        0
+      ],
+      "credentials": {
+        "ampostApi": {
+          "id": "ampostApiCredential",
+          "name": "Ampost account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    }
+  ],
+  "connections": {
+    "New video": {
+      "main": [
+        [
+          {
+            "node": "Share the video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

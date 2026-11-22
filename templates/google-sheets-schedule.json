@@ -1,0 +1,277 @@
+{
+  "name": "Schedule social media posts from Google Sheets with Ampost",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Schedule posts from Google Sheets\nOne row per post. Every 15 minutes, rows with no `status` are scheduled in Ampost, and the row gets the post status and ID.\n\n### Setup\n1. Install the **n8n-nodes-ampost** community node (Settings → Community nodes).\n2. Create an Ampost credential with an API key from ampost.io → Settings → API keys.\n3. Make a sheet with the columns `text`, `platforms` (comma-separated, e.g. `bluesky,threads`), `publish_at` (e.g. `2026-12-01 09:00`, in the workflow time zone; empty = next queue slot), `link`, `image_url`, `status`, `post_id`.\n4. Pick the sheet in **Read rows** and **Write back the status**.\n5. Activate the workflow.\n\nA failed row gets `error: ...` in `status`; clear it to try again. Scheduling needs a paid Ampost plan; the queue works on every plan.",
+        "height": 620,
+        "width": 420,
+        "color": 4
+      },
+      "id": "755415b6-2e23-4a2b-a11b-01fc37d47970",
+      "name": "About this workflow",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "id": "28e54bc8-812f-4eb5-a91e-f3ec32f1e45a",
+      "name": "Every 15 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1"
+        },
+        "options": {}
+      },
+      "id": "936f7088-bae1-4fa2-af46-56981281bbc5",
+      "name": "Read rows",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "googleSheetsCredential",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "935fecad-a76f-4bf9-acc4-73c387c785b3",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "cfb438fa-0edd-482e-a35e-c7797cac1fab",
+              "leftValue": "={{ $json.text }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a9170ac7-4d4b-4f60-ab76-2a7fe4d76aa3",
+      "name": "Not posted yet",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "platforms": "={{ String($json.platforms).split(',').map(p => p.trim()).filter(p => p) }}",
+        "text": "={{ $json.text }}",
+        "publishMode": "={{ $json.publish_at ? 'schedule' : 'queue' }}",
+        "scheduledFor": "={{ $json.publish_at }}",
+        "additionalFields": {
+          "idempotencyKey": "=sheet-{{ $json.row_number }}-{{ $json.text.hash('sha256').slice(0, 16) }}",
+          "linkUrl": "={{ $json.link }}",
+          "mediaJson": "={{ $json.image_url ? [{ url: $json.image_url, type: 'image' }] : [] }}"
+        },
+        "platformOptions": {}
+      },
+      "id": "3fae8df0-f54d-4652-a3db-21165791081f",
+      "name": "Schedule the post",
+      "type": "n8n-nodes-ampost.ampost",
+      "typeVersion": 1,
+      "position": [
+        720,
+        0
+      ],
+      "credentials": {
+        "ampostApi": {
+          "id": "ampostApiCredential",
+          "name": "Ampost account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $('Not posted yet').item.json.row_number }}",
+            "status": "={{ $json.error ? 'error: ' + $json.error : $json.status }}",
+            "post_id": "={{ $json.id ?? '' }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "post_id",
+              "displayName": "post_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "9987f7c0-ee0e-4958-ae76-453e808b59c9",
+      "name": "Write back the status",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        960,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "googleSheetsCredential",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every 15 minutes": {
+      "main": [
+        [
+          {
+            "node": "Read rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read rows": {
+      "main": [
+        [
+          {
+            "node": "Not posted yet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Not posted yet": {
+      "main": [
+        [
+          {
+            "node": "Schedule the post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule the post": {
+      "main": [
+        [
+          {
+            "node": "Write back the status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

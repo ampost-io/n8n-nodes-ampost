@@ -1,0 +1,39 @@
+# CI for this repo once it lives at github.com/ampost-io/n8n-nodes-ampost. While the code is in the
+# Ampost app repo (public-repos/n8n-nodes-ampost), the root workflow .github/workflows/public-repos.yml
+# runs instead.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint, build, test (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - name: n8n's community package scanner (the check n8n runs before verifying a node)
+        if: matrix.node == 22
+        run: |
+          npm pack --pack-destination "$RUNNER_TEMP"
+          tar xzf "$RUNNER_TEMP"/n8n-nodes-ampost-*.tgz -C "$RUNNER_TEMP"
+          npx --yes @n8n/scan-community-package "$RUNNER_TEMP/package"

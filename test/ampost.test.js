@@ -228,12 +228,12 @@ test('media upload: create, PUT to the returned URL, then poll until completed',
 			'GET /api/media/uploads/up1': ok({
 				id: 'up1',
 				status: 'completed',
-				url: 'https://cdn.example/cat.png',
+				files: [{ url: 'https://cdn.example/cat.png', type: 'image' }],
 			}),
 		}),
 	});
 	const result = await runOperation(ctx, 'media', 'upload', 0);
-	assert.equal(result.url, 'https://cdn.example/cat.png');
+	assert.equal(result.files[0].url, 'https://cdn.example/cat.png');
 	assert.deepEqual(ctx.requests[0].body, { fileName: 'cat.png' });
 	assert.equal(ctx.requests[1].headers['x-content-type'], 'image/png');
 	assert.equal(ctx.requests[1].headers.authorization, 'Bearer client-token');

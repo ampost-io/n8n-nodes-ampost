@@ -1,0 +1,326 @@
+{
+  "name": "AI-written social media post with Slack approval, published by Ampost",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## AI-written post with approval\nEvery Monday OpenAI writes a post on your topic. Ampost saves it as a draft (you can also edit it in Ampost), Slack asks you to approve it, and Ampost publishes or deletes it.\n\n### Setup\n1. Install the **n8n-nodes-ampost** community node (Settings → Community nodes).\n2. Create an Ampost credential with an API key from ampost.io → Settings → API keys.\n3. Add OpenAI and Slack credentials, and pick the channel in **Ask for approval**.\n4. Set the topic and platforms in **Topic**.\n5. Activate the workflow.\n\nPrefer email? Swap the Slack node for Gmail → Send and wait for response.",
+        "height": 600,
+        "width": 420,
+        "color": 4
+      },
+      "id": "0072a877-dda5-4170-a954-3b65199b57ef",
+      "name": "About this workflow",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "748d271a-d349-47df-a6fd-70ab77f267b7",
+      "name": "Every Monday",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2ee371c3-8820-4ad4-a479-67b8185ad7fb",
+              "name": "topic",
+              "value": "One practical tip for small teams that post on social media",
+              "type": "string"
+            },
+            {
+              "id": "953ff609-c811-4785-ab21-f3a1cbde77ae",
+              "name": "platforms",
+              "value": "bluesky,threads",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f9439c3d-1fee-4e64-acaa-b533fbd48a71",
+      "name": "Topic",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=Write a post about: {{ $json.topic }}"
+            }
+          ]
+        },
+        "options": {
+          "instructions": "You write social media posts. Plain text, no hashtags, no emojis, at most 280 characters. Answer with the post only."
+        }
+      },
+      "id": "5b2ebae3-12aa-4799-ad1a-3bb6addb28a0",
+      "name": "Write the post",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        480,
+        0
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "openAiCredential",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "platforms": "={{ $('Topic').item.json.platforms.split(',').map(p => p.trim()) }}",
+        "text": "={{ $json.output[0].content[0].text.trim() }}",
+        "publishMode": "draft",
+        "additionalFields": {},
+        "platformOptions": {}
+      },
+      "id": "7d32b717-4a7a-4d40-a2a0-ce65a07899c4",
+      "name": "Save as draft",
+      "type": "n8n-nodes-ampost.ampost",
+      "typeVersion": 1,
+      "position": [
+        720,
+        0
+      ],
+      "credentials": {
+        "ampostApi": {
+          "id": "ampostApiCredential",
+          "name": "Ampost account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list"
+        },
+        "message": "=New post for {{ $json.platforms.join(', ') }}:\n\n{{ $json.text }}",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double"
+          }
+        },
+        "options": {
+          "limitWaitTime": {
+            "values": {
+              "resumeAmount": 2,
+              "resumeUnit": "days"
+            }
+          }
+        }
+      },
+      "id": "2d3d6557-4ca6-4dd4-aa4d-fbd9f06782f9",
+      "name": "Ask for approval",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        960,
+        0
+      ],
+      "credentials": {
+        "slackApi": {
+          "id": "slackCredential",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "51f2fbb1-39e6-481b-aec7-2eed76674ed6",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ca0e87c1-b7c3-4a10-a770-691c15d81255",
+      "name": "Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "publish",
+        "postId": "={{ $('Save as draft').item.json.id }}",
+        "idempotencyKey": "=approve-{{ $('Save as draft').item.json.id }}"
+      },
+      "id": "576827c9-3ae3-4e87-a746-1f0c94e51f0e",
+      "name": "Publish",
+      "type": "n8n-nodes-ampost.ampost",
+      "typeVersion": 1,
+      "position": [
+        1680,
+        -100
+      ],
+      "credentials": {
+        "ampostApi": {
+          "id": "ampostApiCredential",
+          "name": "Ampost account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "postId": "={{ $('Save as draft').item.json.id }}"
+      },
+      "id": "c8fd5835-099b-4427-ab7e-ff9fc99bd9cb",
+      "name": "Delete the draft",
+      "type": "n8n-nodes-ampost.ampost",
+      "typeVersion": 1,
+      "position": [
+        1680,
+        100
+      ],
+      "credentials": {
+        "ampostApi": {
+          "id": "ampostApiCredential",
+          "name": "Ampost account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every Monday": {
+      "main": [
+        [
+          {
+            "node": "Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Topic": {
+      "main": [
+        [
+          {
+            "node": "Write the post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write the post": {
+      "main": [
+        [
+          {
+            "node": "Save as draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save as draft": {
+      "main": [
+        [
+          {
+            "node": "Ask for approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ask for approval": {
+      "main": [
+        [
+          {
+            "node": "Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approved?": {
+      "main": [
+        [
+          {
+            "node": "Publish",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Delete the draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}
