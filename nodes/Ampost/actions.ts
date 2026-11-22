@@ -249,6 +249,14 @@ async function runPost(ctx: IExecuteFunctions, operation: string, i: number): Pr
 		}
 		case 'delete':
 			return ampostApiRequest.call(ctx, { method: 'DELETE', path: postPath(ctx, i) });
+		case 'unpublish': {
+			const accountIds = toList(ctx.getNodeParameter('accountIds', i, []));
+			return ampostApiRequest.call(ctx, {
+				method: 'POST',
+				path: postPath(ctx, i, '/unpublish'),
+				body: accountIds.length > 0 ? { accountIds } : {},
+			});
+		}
 	}
 	throw new NodeOperationError(ctx.getNode(), `Unknown post operation: ${operation}`, {
 		itemIndex: i,

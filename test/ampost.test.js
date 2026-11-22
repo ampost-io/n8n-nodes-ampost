@@ -188,14 +188,18 @@ test('post operations call the right endpoints', async () => {
 			'POST /api/posts/p%2F1/publish': ok({ status: 'posting' }),
 			'POST /api/posts/p%2F1/retry': ok({ status: 'posting' }),
 			'DELETE /api/posts/p%2F1': ok({ deleted: true }),
+			'POST /api/posts/p%2F1/unpublish': ok({ status: 'deleted' }),
 		}),
 	});
 	await runOperation(ctx, 'post', 'get', 0);
 	await runOperation(ctx, 'post', 'publish', 0);
 	await runOperation(ctx, 'post', 'retry', 0);
 	await runOperation(ctx, 'post', 'delete', 0);
+	assert.deepEqual(await runOperation(ctx, 'post', 'unpublish', 0), { status: 'deleted' });
 	assert.equal(ctx.requests[1].headers['Idempotency-Key'], 'once');
 	assert.deepEqual(ctx.requests[2].body, { accountIds: ['a1'] });
+	assert.deepEqual(ctx.requests[4].body, { accountIds: ['a1'] });
+	assert.equal(ctx.requests[4].headers['Idempotency-Key'], undefined);
 });
 
 test('post create sends the idempotency key from Additional Fields', async () => {

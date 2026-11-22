@@ -38,7 +38,7 @@ n8n tests the credential by calling the API with the key; any valid key passes.
 
 | Scope | Needed for |
 | --- | --- |
-| `posts:write` | Post: Create, Publish, Retry, Delete |
+| `posts:write` | Post: Create, Publish, Retry, Delete, Unpublish |
 | `posts:read` | Post: Validate, Get, Get Many. Queue: Get Slots |
 | `media:write` | Media: Upload |
 | `accounts:read` | Account: Get, Get Many. Platform Set: Get Many. The platform and account lists in the node |
@@ -59,6 +59,7 @@ and are not accepted by the REST API.
 | Post | Publish | Publish a draft or a scheduled post now |
 | Post | Retry | Publish again to the accounts that failed |
 | Post | Delete | Discard a post that was not published |
+| Post | Unpublish | Delete a published post from the platforms (all accounts, or the ones you pick). Instagram and TikTok have no delete API: those accounts keep it, with `notice` saying so |
 | Account | Get | A connected account with its health (`canPost`, `needsReconnect`, issues) |
 | Account | Get Many | List connected accounts |
 | Media | Upload | Upload a file from the item's binary data, for use in a post |

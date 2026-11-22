@@ -29,7 +29,7 @@ export const postOperations: INodeProperties[] = [
 			{
 				name: 'Delete',
 				value: 'delete',
-				description: 'Discard a post that was not published',
+				description: 'Discard a post that was not published (use Unpublish for a published one)',
 				action: 'Delete a post',
 			},
 			{
@@ -52,6 +52,13 @@ export const postOperations: INodeProperties[] = [
 				action: 'Retry a post',
 			},
 			{
+				name: 'Unpublish',
+				value: 'unpublish',
+				description:
+					'Delete a published post from the platforms. Instagram and TikTok have no delete API: those accounts keep it, with a notice.',
+				action: 'Unpublish a post',
+			},
+			{
 				name: 'Validate',
 				value: 'validate',
 				description: "Check a post against every platform's rules without creating it",
@@ -68,7 +75,7 @@ const postIdField: INodeProperties = {
 	type: 'string',
 	required: true,
 	default: '',
-	displayOptions: showFor('post', ['get', 'delete', 'publish', 'retry']),
+	displayOptions: showFor('post', ['get', 'delete', 'publish', 'retry', 'unpublish']),
 	description: 'ID of the post, as returned by Create or Get Many',
 };
 
@@ -314,9 +321,9 @@ const actionFields: INodeProperties[] = [
 		type: 'multiOptions',
 		typeOptions: { loadOptionsMethod: 'getAccounts' },
 		default: [],
-		displayOptions: showFor('post', ['retry']),
+		displayOptions: showFor('post', ['retry', 'unpublish']),
 		description:
-			'Accounts to retry. Empty: every failed account. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+			'Accounts to retry or unpublish. Empty: every failed account (Retry), every account where the post is published (Unpublish). Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 	},
 	{
 		displayName: 'Idempotency Key',
