@@ -20,7 +20,13 @@ import {
 	queueOperations,
 } from './descriptions/OtherDescriptions';
 import { postFields, postOperations } from './descriptions/PostDescription';
-import { getAccounts, getPlatforms, getPlatformSets } from './loadOptions';
+import {
+	getAccounts,
+	getPlatforms,
+	getPlatformSets,
+	getPlatformSetsOrAll,
+	getPlatformSetsOrDefault,
+} from './loadOptions';
 
 /**
  * Programmatic style: Media > Upload needs three dependent calls (start the
@@ -74,7 +80,13 @@ export class Ampost implements INodeType {
 	};
 
 	methods = {
-		loadOptions: { getAccounts, getPlatforms, getPlatformSets },
+		loadOptions: {
+			getAccounts,
+			getPlatforms,
+			getPlatformSets,
+			getPlatformSetsOrAll,
+			getPlatformSetsOrDefault,
+		},
 	};
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {

@@ -1,5 +1,11 @@
 import type { INodeProperties } from 'n8n-workflow';
-import { paginationFields, PLATFORM_OPTIONS, platformSetField, showFor } from './shared';
+import {
+	optionalPlatformSetField,
+	paginationFields,
+	PLATFORM_OPTIONS,
+	platformSetField,
+	showFor,
+} from './shared';
 
 const accountField = (description: string): Omit<INodeProperties, 'displayOptions'> => ({
 	displayName: 'Account Name or ID',
@@ -63,7 +69,7 @@ export const accountFields: INodeProperties[] = [
 		options: [
 			platformFilter('Only accounts on this platform'),
 			{
-				...platformSetField,
+				...optionalPlatformSetField('getPlatformSetsOrAll'),
 				description: 'Only accounts in this platform set. ' + platformSetField.description,
 			},
 			{
@@ -259,7 +265,7 @@ export const analyticsFields: INodeProperties[] = [
 			},
 			platformFilter('Only accounts on this platform'),
 			{
-				...platformSetField,
+				...optionalPlatformSetField('getPlatformSetsOrAll'),
 				description: 'Only accounts in this platform set. ' + platformSetField.description,
 			},
 			{

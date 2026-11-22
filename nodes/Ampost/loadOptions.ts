@@ -24,6 +24,18 @@ export async function getPlatformSets(
 	}));
 }
 
+export async function getPlatformSetsOrDefault(
+	this: ILoadOptionsFunctions,
+): Promise<INodePropertyOptions[]> {
+	return [{ name: 'Default Platform Set', value: '' }, ...(await getPlatformSets.call(this))];
+}
+
+export async function getPlatformSetsOrAll(
+	this: ILoadOptionsFunctions,
+): Promise<INodePropertyOptions[]> {
+	return [{ name: 'All Platform Sets', value: '' }, ...(await getPlatformSets.call(this))];
+}
+
 /** The platforms that have an active account in the chosen set (the default set when none is chosen). */
 export async function getPlatforms(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 	let platformSetId = this.getCurrentNodeParameter('platformSetId') as string | undefined;

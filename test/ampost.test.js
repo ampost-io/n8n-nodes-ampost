@@ -7,7 +7,13 @@ const { createContext, routes } = require('./fake-context');
 const { buildPostBody, runOperation, toIsoTime } = require('../dist/nodes/Ampost/actions');
 const { buildPlatformOptions } = require('../dist/nodes/Ampost/descriptions/platformOptions');
 const { ampostApiRequest, ampostApiRequestAllItems } = require('../dist/nodes/Ampost/transport');
-const { getAccounts, getPlatforms, getPlatformSets } = require('../dist/nodes/Ampost/loadOptions');
+const {
+	getAccounts,
+	getPlatforms,
+	getPlatformSets,
+	getPlatformSetsOrAll,
+	getPlatformSetsOrDefault,
+} = require('../dist/nodes/Ampost/loadOptions');
 const { Ampost } = require('../dist/nodes/Ampost/Ampost.node');
 
 const ok = (body) => ({ statusCode: 200, body });
@@ -333,6 +339,36 @@ test('load options list sets, platforms of the default set, and accounts', async
 		{ name: 'Bluesky: @amp.bsky.social (disconnected)', value: 'a1' },
 		{ name: 'X (Twitter): @amp', value: 'a2' },
 	]);
+	// Optional set fields start with an empty choice, so an empty value is not flagged as invalid.
+	assert.deepEqual((await getPlatformSetsOrDefault.call(ctx))[0], {
+		name: 'Default Platform Set',
+		value: '',
+	});
+	assert.deepEqual(
+		(await getPlatformSetsOrAll.call(ctx)).map((option) => option.value),
+		['', 'set_1', 'set_2'],
+	);
+});
+
+test('only the required platform set fields lack an empty choice', () => {
+	const methods = {};
+	const walk = (properties) => {
+		for (const property of properties) {
+			if (property.name === 'platformSetId') {
+				const method = property.typeOptions.loadOptionsMethod;
+				assert.equal(method === 'getPlatformSets', property.required === true, method);
+				methods[method] = (methods[method] ?? 0) + 1;
+			}
+			walk(property.options ?? []);
+			walk(property.values ?? []);
+		}
+	};
+	walk(new Ampost().description.properties);
+	assert.deepEqual(methods, {
+		getPlatformSets: 2,
+		getPlatformSetsOrAll: 3,
+		getPlatformSetsOrDefault: 1,
+	});
 });
 
 test('the node returns paired items and honours Continue On Fail', async () => {

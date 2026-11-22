@@ -64,3 +64,11 @@ export const platformSetField: Omit<INodeProperties, 'displayOptions'> = {
 	description:
 		'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 };
+
+/** An optional set: its list starts with an empty choice, so leaving it empty is not flagged. */
+export const optionalPlatformSetField = (
+	emptyChoice: 'getPlatformSetsOrDefault' | 'getPlatformSetsOrAll',
+): Omit<INodeProperties, 'displayOptions'> => ({
+	...platformSetField,
+	typeOptions: { loadOptionsMethod: emptyChoice },
+});

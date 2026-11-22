@@ -81,7 +81,7 @@ export class AmpostTrigger implements INodeType {
 			},
 			{
 				displayName:
-					'Ampost sends events only to public https addresses. n8n must run on one (n8n Cloud does), or set WEBHOOK_URL to its public address. The API key needs the webhooks:write scope.',
+					'Ampost sends events only to public https addresses. n8n must run on one (n8n Cloud does), or set N8N_WEBHOOK_URL (WEBHOOK_URL before n8n 2) to its public address. The API key needs the webhooks:write scope.',
 				name: 'notice',
 				type: 'notice',
 				default: '',
@@ -129,7 +129,7 @@ export class AmpostTrigger implements INodeType {
 						`Ampost sends webhooks only to public https URLs, and this n8n's webhook URL is ${url}`,
 						{
 							description:
-								'Run n8n behind a public https address and set the WEBHOOK_URL environment variable to it.',
+								'Run n8n behind a public https address and set the N8N_WEBHOOK_URL environment variable (WEBHOOK_URL before n8n 2) to it.',
 						},
 					);
 				}

@@ -3,6 +3,7 @@ import { platformOptionProperties } from './platformOptions';
 import {
 	paginationFields,
 	PLATFORM_OPTIONS,
+	optionalPlatformSetField,
 	platformSetField,
 	POST_STATUS_OPTIONS,
 	showFor,
@@ -101,7 +102,7 @@ const composeFields: INodeProperties[] = [
 			'The body of POST /api/posts. See <a href="https://ampost.io/docs?ref=n8n">the API reference</a>.',
 	},
 	{
-		...platformSetField,
+		...optionalPlatformSetField('getPlatformSetsOrDefault'),
 		displayOptions: { show: { resource: ['post'], operation: COMPOSE, inputMode: ['fields'] } },
 		description:
 			'The platform set whose accounts post. Empty: your default set. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
@@ -347,7 +348,7 @@ const listFields: INodeProperties[] = [
 				description: 'Only posts with an account on this platform',
 			},
 			{
-				...platformSetField,
+				...optionalPlatformSetField('getPlatformSetsOrAll'),
 				description: 'Only posts to this platform set. ' + platformSetField.description,
 			},
 			{
