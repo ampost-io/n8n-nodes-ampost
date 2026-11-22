@@ -1,10 +1,11 @@
-# Publishes to npm with a provenance statement when a v<version> tag is pushed. The ampost repo's mirror
-# (scripts/mirror-public-repos.sh) pushes that tag when package.json gets a new version, so a release
-# is a version bump committed in ampost's public-repos/. Run it by hand on a tag to retry.
+# Stages a release on npm, with a provenance statement, when a v<version> tag is pushed. The ampost
+# repo's mirror (scripts/mirror-public-repos.sh) pushes that tag when package.json gets a new version,
+# so a release is a version bump committed in ampost's public-repos/. Run it by hand on a tag to retry.
 #
-# Off until the repository variable NPM_PUBLISH_ENABLED is "true". Auth: npm trusted publishing for
-# this workflow (no secret), or the NPM_TOKEN secret, needed for the first version because trusted
-# publishing is set up on a package that already exists.
+# `npm stage publish` only queues the version: a maintainer approves it with 2FA on npmjs.com (or
+# `npm stage approve <id>`) before anyone can install it. Auth is npm trusted publishing (OIDC), set
+# to stage-only on npmjs.com, so a plain `npm publish` from here is refused. No token secret.
+# Off until the repository variable NPM_PUBLISH_ENABLED is "true".
 name: Publish to npm
 
 on:
@@ -51,7 +52,6 @@ jobs:
       - if: steps.version.outputs.skip != 'true'
         run: npm run build
       - if: steps.version.outputs.skip != 'true'
-        run: npm publish --provenance --access public
+        run: npm stage publish --provenance --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           RELEASE_MODE: "true"

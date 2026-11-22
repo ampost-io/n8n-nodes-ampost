@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1
+
+- Released through npm staged publishing with trusted publishing (no change to the nodes).
+
 ## 0.1.0
 
 First release.
