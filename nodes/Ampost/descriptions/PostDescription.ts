@@ -33,6 +33,13 @@ export const postOperations: INodeProperties[] = [
 				action: 'Delete a post',
 			},
 			{
+				name: 'Edit Published',
+				value: 'editPublished',
+				description:
+					"Replace a published post's text on the platforms. Instagram, Threads, TikTok, Bluesky and X have no edit API: those accounts keep their text, with a notice.",
+				action: 'Edit a published post',
+			},
+			{
 				name: 'Get',
 				value: 'get',
 				description: 'Get a post with the result on each account',
@@ -75,7 +82,7 @@ const postIdField: INodeProperties = {
 	type: 'string',
 	required: true,
 	default: '',
-	displayOptions: showFor('post', ['get', 'delete', 'publish', 'retry', 'unpublish']),
+	displayOptions: showFor('post', ['get', 'delete', 'publish', 'retry', 'unpublish', 'editPublished']),
 	description: 'ID of the post, as returned by Create or Get Many',
 };
 
@@ -316,14 +323,25 @@ const composeFields: INodeProperties[] = [
 
 const actionFields: INodeProperties[] = [
 	{
+		displayName: 'New Text',
+		name: 'newText',
+		type: 'string',
+		typeOptions: { rows: 5 },
+		required: true,
+		default: '',
+		displayOptions: showFor('post', ['editPublished']),
+		description:
+			"The text that replaces the published one. Media and links stay. Each account's new text is in platformPosts[].text; an account the platform refused keeps its text, with platformPosts[].notice.",
+	},
+	{
 		displayName: 'Account Names or IDs',
 		name: 'accountIds',
 		type: 'multiOptions',
 		typeOptions: { loadOptionsMethod: 'getAccounts' },
 		default: [],
-		displayOptions: showFor('post', ['retry', 'unpublish']),
+		displayOptions: showFor('post', ['retry', 'unpublish', 'editPublished']),
 		description:
-			'Accounts to retry or unpublish. Empty: every failed account (Retry), every account where the post is published (Unpublish). Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+			'Accounts to retry, unpublish or edit. Empty: every failed account (Retry), every account where the post is published (Unpublish, Edit Published). Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 	},
 	{
 		displayName: 'Idempotency Key',

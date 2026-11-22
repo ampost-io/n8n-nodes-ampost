@@ -36,6 +36,13 @@ export const accountOperations: INodeProperties[] = [
 		displayOptions: { show: { resource: ['account'] } },
 		options: [
 			{
+				name: 'Disconnect',
+				value: 'disconnect',
+				description:
+					"Revoke Ampost's access and delete the account's tokens. Its scheduled posts will fail; reconnect it in the dashboard.",
+				action: 'Disconnect an account',
+			},
+			{
 				name: 'Get',
 				value: 'get',
 				description: 'Get a connected account with its health and platform details',
@@ -57,6 +64,13 @@ export const accountFields: INodeProperties[] = [
 		...accountField('The account to get.'),
 		required: true,
 		displayOptions: showFor('account', ['get']),
+	},
+	{
+		...accountField(
+			'The account to disconnect. Instagram and Threads have no revoke API: the result has providerRevoked false and providerAccessSettings, where to remove Ampost.',
+		),
+		required: true,
+		displayOptions: showFor('account', ['disconnect']),
 	},
 	...paginationFields('account', 'getAll'),
 	{

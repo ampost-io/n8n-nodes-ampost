@@ -182,13 +182,14 @@ test('ampostApiRequestAllItems follows pagination and stops at the limit', async
 
 test('post operations call the right endpoints', async () => {
 	const ctx = createContext({
-		params: { postId: 'p/1', idempotencyKey: 'once', accountIds: ['a1'] },
+		params: { postId: 'p/1', idempotencyKey: 'once', accountIds: ['a1'], newText: 'Fixed' },
 		respond: routes({
 			'GET /api/posts/p%2F1': ok({ id: 'p/1' }),
 			'POST /api/posts/p%2F1/publish': ok({ status: 'posting' }),
 			'POST /api/posts/p%2F1/retry': ok({ status: 'posting' }),
 			'DELETE /api/posts/p%2F1': ok({ deleted: true }),
 			'POST /api/posts/p%2F1/unpublish': ok({ status: 'deleted' }),
+			'POST /api/posts/p%2F1/edit-published': ok({ status: 'published' }),
 		}),
 	});
 	await runOperation(ctx, 'post', 'get', 0);
@@ -200,6 +201,30 @@ test('post operations call the right endpoints', async () => {
 	assert.deepEqual(ctx.requests[2].body, { accountIds: ['a1'] });
 	assert.deepEqual(ctx.requests[4].body, { accountIds: ['a1'] });
 	assert.equal(ctx.requests[4].headers['Idempotency-Key'], undefined);
+	assert.deepEqual(await runOperation(ctx, 'post', 'editPublished', 0), { status: 'published' });
+	assert.deepEqual(ctx.requests[5].body, { text: 'Fixed', accountIds: ['a1'] });
+	assert.equal(ctx.requests[5].headers['Idempotency-Key'], undefined);
+});
+
+test('account disconnect deletes the account', async () => {
+	const ctx = createContext({
+		params: { accountId: 'a/1' },
+		respond: routes({ 'DELETE /api/accounts/a%2F1': ok({ status: 'revoked', providerRevoked: true }) }),
+	});
+	assert.deepEqual(await runOperation(ctx, 'account', 'disconnect', 0), { status: 'revoked', providerRevoked: true });
+	assert.equal(ctx.requests[0].method, 'DELETE');
+});
+
+test('post edit published sends only the text when no account is picked, and refuses empty text', async () => {
+	const ctx = createContext({
+		params: { postId: 'p1', accountIds: [], newText: 'New' },
+		respond: routes({ 'POST /api/posts/p1/edit-published': ok({ status: 'published' }) }),
+	});
+	await runOperation(ctx, 'post', 'editPublished', 0);
+	assert.deepEqual(ctx.requests[0].body, { text: 'New' });
+	const empty = createContext({ params: { postId: 'p1', accountIds: [], newText: '  ' }, respond: routes({}) });
+	await assert.rejects(runOperation(empty, 'post', 'editPublished', 0), /New Text is empty/);
+	assert.equal(empty.requests.length, 0);
 });
 
 test('post create sends the idempotency key from Additional Fields', async () => {

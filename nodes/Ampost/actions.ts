@@ -257,6 +257,18 @@ async function runPost(ctx: IExecuteFunctions, operation: string, i: number): Pr
 				body: accountIds.length > 0 ? { accountIds } : {},
 			});
 		}
+		case 'editPublished': {
+			const text = ctx.getNodeParameter('newText', i) as string;
+			if (!text.trim()) {
+				throw new NodeOperationError(ctx.getNode(), 'New Text is empty', { itemIndex: i });
+			}
+			const accountIds = toList(ctx.getNodeParameter('accountIds', i, []));
+			return ampostApiRequest.call(ctx, {
+				method: 'POST',
+				path: postPath(ctx, i, '/edit-published'),
+				body: accountIds.length > 0 ? { text, accountIds } : { text },
+			});
+		}
 	}
 	throw new NodeOperationError(ctx.getNode(), `Unknown post operation: ${operation}`, {
 		itemIndex: i,
@@ -330,10 +342,10 @@ export async function runOperation(
 		case 'post':
 			return runPost(ctx, operation, i);
 		case 'account':
-			if (operation === 'get') {
+			if (operation === 'get' || operation === 'disconnect') {
 				const accountId = ctx.getNodeParameter('accountId', i) as string;
 				return ampostApiRequest.call(ctx, {
-					method: 'GET',
+					method: operation === 'get' ? 'GET' : 'DELETE',
 					path: `/api/accounts/${encodeURIComponent(accountId)}`,
 				});
 			}

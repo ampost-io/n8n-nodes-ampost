@@ -38,10 +38,11 @@ n8n tests the credential by calling the API with the key; any valid key passes.
 
 | Scope | Needed for |
 | --- | --- |
-| `posts:write` | Post: Create, Publish, Retry, Delete, Unpublish |
+| `posts:write` | Post: Create, Publish, Retry, Delete, Unpublish, Edit Published |
 | `posts:read` | Post: Validate, Get, Get Many. Queue: Get Slots |
 | `media:write` | Media: Upload |
 | `accounts:read` | Account: Get, Get Many. Platform Set: Get Many. The platform and account lists in the node |
+| `accounts:write` | Account: Disconnect |
 | `analytics:read` | Analytics: Get Post Metrics, Get Overview |
 | `webhooks:write` | Ampost Trigger |
 
@@ -60,7 +61,9 @@ and are not accepted by the REST API.
 | Post | Retry | Publish again to the accounts that failed |
 | Post | Delete | Discard a post that was not published |
 | Post | Unpublish | Delete a published post from the platforms (all accounts, or the ones you pick). Instagram and TikTok have no delete API: those accounts keep it, with `notice` saying so |
+| Post | Edit Published | Replace a published post's text on the platforms (all accounts, or the ones you pick); media and links stay. Instagram, Threads, TikTok, Bluesky and X have no edit API: those accounts keep their text, with `notice` saying so |
 | Account | Get | A connected account with its health (`canPost`, `needsReconnect`, issues) |
+| Account | Disconnect | Revoke Ampost's access and delete the tokens; the account becomes `revoked` and keeps its id for a reconnect. Instagram and Threads have no revoke API (`providerRevoked: false`, `providerAccessSettings` says where to remove Ampost) |
 | Account | Get Many | List connected accounts |
 | Media | Upload | Upload a file from the item's binary data, for use in a post |
 | Platform Set | Get Many | List platform sets (groups of accounts, one per platform) |
