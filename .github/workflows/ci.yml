@@ -21,7 +21,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: [20, 22]
+        # The dev dependencies (n8n-workflow -> isolated-vm 7) build only on Node 22+.
+        # The published package has no runtime dependencies.
+        node: [22, 24]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
