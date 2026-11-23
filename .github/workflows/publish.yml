@@ -55,3 +55,16 @@ jobs:
         run: npm stage publish --provenance --access public
         env:
           RELEASE_MODE: "true"
+
+  # A GitHub Release for every version tag, so the repo shows its versions (GitHub SEO/GEO). Runs even
+  # while publishing is off; the notes are GitHub's generated list of changes since the last tag.
+  github-release:
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 || gh release create "$TAG" -R "$GITHUB_REPOSITORY" --title "$TAG" --generate-notes --verify-tag
