@@ -175,7 +175,7 @@ verified community nodes) once the repo variable `NPM_PUBLISH_ENABLED` is `true`
 
 - [API docs](https://ampost.io/docs?ref=github)
 - [n8n how-to](https://ampost.io/how-to/post-to-social-media-from-n8n?ref=github)
-- [Node.js SDK](https://github.com/ampost-io/ampost-node) and [Python SDK](https://github.com/ampost-io/ampost-python)
+- [Node.js SDK](https://github.com/ampost-io/ampost-node), [Python SDK](https://github.com/ampost-io/ampost-python) and [Ruby SDK](https://github.com/ampost-io/ampost-ruby)
 - [Pricing](https://ampost.io/pricing?ref=github)
 
 ## License
