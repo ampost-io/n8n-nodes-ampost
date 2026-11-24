@@ -33,8 +33,19 @@ for (const file of files) {
 					assert.ok(names.has(target.node), `connection to ${target.node}`);
 		}
 
-		const sticky = workflow.nodes.find((node) => node.type === 'n8n-nodes-base.stickyNote');
-		assert.match(sticky?.parameters.content ?? '', /### Setup/, 'a sticky note explains the setup');
+		// n8n's template guidelines: one overview note (How it works, Setup) naming the community
+		// node package, its tested version and install guide, plus section notes from 4 nodes up.
+		const stickies = workflow.nodes.filter((node) => node.type === 'n8n-nodes-base.stickyNote');
+		const overview = stickies[0]?.parameters.content ?? '';
+		assert.match(overview, /### How it works/, 'the overview note says how it works');
+		assert.match(overview, /### Setup/, 'the overview note explains the setup');
+		assert.match(overview, /\*\*n8n-nodes-ampost\*\* \(tested with \d+\.\d+\.\d+\)/, 'names the tested version');
+		assert.match(overview, /docs\.n8n\.io\/integrations\/community-nodes\/installation/, 'links the install guide');
+		assert.match(overview, /https:\/\/ampost\.io\/\?ref=n8n/, 'links ampost.io with ref=n8n');
+		const words = overview.split(/\s+/).length;
+		assert.ok(words >= 100 && words <= 300, `overview has ${words} words, n8n asks for 100-300`);
+		const working = workflow.nodes.length - stickies.length;
+		if (working >= 4) assert.ok(stickies.length >= 2, 'section notes group the nodes');
 
 		const ampostNodes = workflow.nodes.filter((node) => descriptions[node.type]);
 		assert.ok(ampostNodes.length > 0, 'uses the Ampost node');

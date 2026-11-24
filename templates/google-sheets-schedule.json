@@ -3,18 +3,17 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## Schedule posts from Google Sheets\nOne row per post. Every 15 minutes, rows with no `status` are scheduled in Ampost, and the row gets the post status and ID.\n\n### Setup\n1. Install the **n8n-nodes-ampost** community node (Settings → Community nodes).\n2. Create an Ampost credential with an API key from ampost.io → Settings → API keys.\n3. Make a sheet with the columns `text`, `platforms` (comma-separated, e.g. `bluesky,threads`), `publish_at` (e.g. `2026-12-01 09:00`, in the workflow time zone; empty = next queue slot), `link`, `image_url`, `status`, `post_id`.\n4. Pick the sheet in **Read rows** and **Write back the status**.\n5. Activate the workflow.\n\nA failed row gets `error: ...` in `status`; clear it to try again. Scheduling needs a paid Ampost plan; the queue works on every plan.",
-        "height": 620,
-        "width": 420,
-        "color": 4
+        "content": "## Schedule posts from Google Sheets\n### How it works\nOne row per post. Every 15 minutes, rows with no `status` are scheduled in Ampost, and the row gets the post status and ID.\n\n### Setup\n1. Install the community node **n8n-nodes-ampost** (tested with 0.1.1): Settings → Community nodes → Install, as in the [n8n guide](https://docs.n8n.io/integrations/community-nodes/installation/). Until n8n verifies it, the node needs self-hosted n8n.\n2. Create an Ampost credential with an API key from [ampost.io](https://ampost.io/?ref=n8n) → Settings → API keys.\n3. Make a sheet with the columns `text`, `platforms` (comma-separated, e.g. `bluesky,threads`), `publish_at` (e.g. `2026-12-01 09:00`, in the workflow time zone; empty = next queue slot), `link`, `image_url`, `status`, `post_id`.\n4. Pick the sheet in **Read rows** and **Write back the status**.\n5. Activate the workflow.\n\nA failed row gets `error: ...` in `status`; clear it to try again. Scheduling needs a paid Ampost plan; the queue works on every plan.",
+        "height": 640,
+        "width": 460
       },
       "id": "755415b6-2e23-4a2b-a11b-01fc37d47970",
       "name": "About this workflow",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -480,
-        -160
+        -560,
+        -200
       ]
     },
     {
@@ -219,6 +218,38 @@
           "name": "Google Sheets account"
         }
       }
+    },
+    {
+      "parameters": {
+        "content": "### 1. Find new rows\nReads the sheet and keeps the rows with an empty `status`.",
+        "height": 340,
+        "width": 700,
+        "color": 7
+      },
+      "id": "74ee8c12-94ef-4965-a6df-658748fc13d0",
+      "name": "Section: Find new rows",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 2. Schedule and write back\nAmpost schedules each row, then the row gets the post status and ID.",
+        "height": 340,
+        "width": 460,
+        "color": 7
+      },
+      "id": "e4e98f6c-c719-499f-a340-80dddc8c37e2",
+      "name": "Section: Schedule and write back",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        660,
+        -200
+      ]
     }
   ],
   "connections": {

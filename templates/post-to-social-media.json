@@ -3,18 +3,17 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## Post to social media with Ampost\nPublishes one post to every platform you list, through the Ampost node.\n\n### Setup\n1. Install the **n8n-nodes-ampost** community node (Settings → Community nodes).\n2. Create an Ampost credential with an API key from ampost.io → Settings → API keys.\n3. In **Post content**, set `text` and `platforms` (comma-separated: bluesky, threads, linkedin, twitter, instagram, facebook, tiktok, youtube, pinterest, telegram, discord). Each needs a connected account in Ampost.\n4. Click **Test workflow**.\n\nThe Idempotency-Key makes a retried request post once. Swap **Run it** for any trigger.",
-        "height": 520,
-        "width": 420,
-        "color": 4
+        "content": "## Post to social media with Ampost\n### How it works\nPublishes one post to every platform you list, through the Ampost node.\n\n### Setup\n1. Install the community node **n8n-nodes-ampost** (tested with 0.1.1): Settings → Community nodes → Install, as in the [n8n guide](https://docs.n8n.io/integrations/community-nodes/installation/). Until n8n verifies it, the node needs self-hosted n8n.\n2. Create an Ampost credential with an API key from [ampost.io](https://ampost.io/?ref=n8n) → Settings → API keys.\n3. In **Post content**, set `text` and `platforms` (comma-separated: bluesky, threads, linkedin, twitter, instagram, facebook, tiktok, youtube, pinterest, telegram, discord). Each needs a connected account in Ampost.\n4. Click **Test workflow**.\n\nThe Idempotency-Key makes a retried request post once. Swap **Run it** for any trigger.",
+        "height": 640,
+        "width": 460
       },
       "id": "e6349483-5374-4352-a132-cecd394c310a",
       "name": "About this workflow",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -480,
-        -160
+        -560,
+        -200
       ]
     },
     {

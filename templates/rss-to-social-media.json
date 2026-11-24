@@ -3,18 +3,17 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## RSS feed to every social account\nEach new item of a feed (blog, podcast, changelog) becomes a post with its title and link.\n\n### Setup\n1. Install the **n8n-nodes-ampost** community node (Settings → Community nodes).\n2. Create an Ampost credential with an API key from ampost.io → Settings → API keys.\n3. Put your feed in **New feed item**.\n4. In **Share the item**, pick every platform in the **Platforms** list (it lists the platforms with a connected account).\n5. Activate the workflow. Only items published after activation are shared.\n\nThe Idempotency-Key comes from the item, so the same item never posts twice.",
-        "height": 520,
-        "width": 420,
-        "color": 4
+        "content": "## RSS feed to every social account\n### How it works\nEach new item of a feed (blog, podcast, changelog) becomes a post with its title and link.\n\n### Setup\n1. Install the community node **n8n-nodes-ampost** (tested with 0.1.1): Settings → Community nodes → Install, as in the [n8n guide](https://docs.n8n.io/integrations/community-nodes/installation/). Until n8n verifies it, the node needs self-hosted n8n.\n2. Create an Ampost credential with an API key from [ampost.io](https://ampost.io/?ref=n8n) → Settings → API keys.\n3. Put your feed in **New feed item**.\n4. In **Share the item**, pick every platform in the **Platforms** list (it lists the platforms with a connected account).\n5. Activate the workflow. Only items published after activation are shared.\n\nThe Idempotency-Key comes from the item, so the same item never posts twice.",
+        "height": 640,
+        "width": 460
       },
       "id": "3686a02e-8a48-408f-abce-903254507319",
       "name": "About this workflow",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -480,
-        -160
+        -560,
+        -200
       ]
     },
     {
