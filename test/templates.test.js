@@ -28,9 +28,11 @@ for (const file of files) {
 
 		for (const [from, connection] of Object.entries(workflow.connections)) {
 			assert.ok(names.has(from), `connection from unknown node ${from}`);
-			for (const output of connection.main)
-				for (const target of output)
-					assert.ok(names.has(target.node), `connection to ${target.node}`);
+			// main, plus ai_languageModel and the like for AI sub-nodes
+			for (const outputs of Object.values(connection))
+				for (const output of outputs)
+					for (const target of output)
+						assert.ok(names.has(target.node), `connection to ${target.node}`);
 		}
 
 		// n8n's template guidelines: one overview note (How it works, Setup) naming the community

@@ -1,0 +1,679 @@
+{
+  "name": "Turn new blog posts into a post per platform with OpenAI and Ampost",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Turn new blog posts into a post per platform\n### How it works\nWhen your blog publishes, this workflow reads the article and asks Ampost which of your platforms can take it: Ampost's platform rules give each platform's character limit and whether it needs an image (the article's og:image is used). OpenAI writes a separate text for each platform within its limit. Ampost then checks the post against your connected accounts. Platforms that fail (no account, too long, no image) are left out, and the rest go into your Ampost queue. You get an email that says what was queued and why any platform was skipped.\n\n### Setup\n1. Install the community node **n8n-nodes-ampost** (tested with 0.1.1) on n8n 2.48.7: Settings → Community nodes → Install, as in the [n8n guide](https://docs.n8n.io/integrations/community-nodes/installation/). Until n8n verifies it, the node needs self-hosted n8n.\n2. Create an Ampost credential with an API key from [ampost.io](https://ampost.io/?ref=n8n) → Setup → API keys, and connect your accounts there.\n3. Add queue slots in Ampost (Queue), or set **whenToPost** to `draft` to review posts in Ampost first.\n4. Add OpenAI and SMTP credentials.\n5. Set your feed URL in **New blog post**, and the platforms, voice and email in **Settings**.\n\n### Good to know\nEach article is posted once: **Skip posted articles** remembers links. Swap the email node for Slack if you prefer.",
+        "height": 860,
+        "width": 520
+      },
+      "id": "about-this-workflow",
+      "name": "About this workflow",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        -260
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 1. Read the article\nNew feed items, minus ones already posted. The page gives the og:image, and Ampost gives each platform's rules.",
+        "height": 400,
+        "width": 1060,
+        "color": 7
+      },
+      "id": "section-read-the-article",
+      "name": "Section: Read the article",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 2. Write a post per platform\nOnly platforms that can take this article. OpenAI writes within each limit; anything over is cut at a word.",
+        "height": 520,
+        "width": 940,
+        "color": 7
+      },
+      "id": "section-write-the-posts",
+      "name": "Section: Write the posts",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 3. Check with Ampost and queue\nAmpost checks the post against your accounts. Failing platforms are dropped; an empty queue means a draft.",
+        "height": 400,
+        "width": 920,
+        "color": 7
+      },
+      "id": "section-check-and-queue",
+      "name": "Section: Check and queue",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2020,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 4. Email a report\nWhat was queued, what was skipped and why, including AI or Ampost errors.",
+        "height": 520,
+        "width": 460,
+        "color": 7
+      },
+      "id": "section-report",
+      "name": "Section: Report",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2980,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        },
+        "feedUrl": "https://example.com/blog/rss.xml"
+      },
+      "id": "new-blog-post",
+      "name": "New blog post",
+      "type": "n8n-nodes-base.rssFeedReadTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "removeItemsSeenInPreviousExecutions",
+        "dedupeValue": "={{ $json.link }}",
+        "options": {}
+      },
+      "id": "skip-posted-articles",
+      "name": "Skip posted articles",
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
+      "position": [
+        200,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "platforms",
+              "name": "platforms",
+              "value": "bluesky,threads,twitter,facebook,instagram,pinterest",
+              "type": "string"
+            },
+            {
+              "id": "brandVoice",
+              "name": "brandVoice",
+              "value": "Friendly and practical. Plain words, no hype, at most one emoji.",
+              "type": "string"
+            },
+            {
+              "id": "whenToPost",
+              "name": "whenToPost",
+              "value": "queue",
+              "type": "string"
+            },
+            {
+              "id": "reportEmail",
+              "name": "reportEmail",
+              "value": "you@example.com",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "settings",
+      "name": "Settings",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        400,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.link }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "get-article-page",
+      "name": "Get article page",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        600,
+        80
+      ],
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://api.ampost.io/api/platforms",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "ampostApi",
+        "options": {}
+      },
+      "id": "get-platform-rules",
+      "name": "Get platform rules",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        80
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "ampostApi": {
+          "id": "ampostApiCredential",
+          "name": "Ampost account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Decide where each new article can go, using Ampost's own platform rules.\nconst rules = $('Get platform rules').first().json.data;\nconst settings = $('Settings').all();\nconst pages = $('Get article page').all();\n\nreturn settings.map((setting, i) => {\n  const a = setting.json;\n  const html = String(pages[i]?.json?.data ?? '');\n  const og =\n    html.match(/<meta[^>]+property=[\"']og:image[\"'][^>]+content=[\"']([^\"']+)[\"']/i) ||\n    html.match(/<meta[^>]+content=[\"']([^\"']+)[\"'][^>]+property=[\"']og:image[\"']/i);\n  const image = og?.[1] || a.enclosure?.url || '';\n  const articleText = String(a['content:encoded'] || a.content || a.contentSnippet || '')\n    .replace(/<[^>]+>/g, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim()\n    .slice(0, 6000);\n\n  const targets = [];\n  const skipped = [];\n  const wanted = String(a.platforms).split(',').map((p) => p.trim().toLowerCase()).filter(Boolean);\n  for (const platform of wanted) {\n    const rule = rules.find((r) => r.platform === platform);\n    if (!rule) {\n      skipped.push({ platform, reason: 'Ampost has no platform with this name' });\n    } else if (rule.availability !== 'available') {\n      skipped.push({ platform, reason: 'not available in Ampost yet' });\n    } else if (rule.media.required && !(image && rule.media.types.includes('image'))) {\n      const reason = rule.media.types.includes('image')\n        ? 'needs an image, and the article has none'\n        : 'needs a video';\n      skipped.push({ platform, reason });\n    } else {\n      targets.push({ platform, maxLength: rule.text.maxLength, linkSupported: rule.link.supported });\n    }\n  }\n\n  return {\n    json: {\n      title: a.title,\n      link: a.link,\n      articleText,\n      image,\n      brandVoice: a.brandVoice,\n      whenToPost: a.whenToPost,\n      reportEmail: a.reportEmail,\n      targets,\n      skipped,\n    },\n    pairedItem: { item: i },\n  };\n});"
+      },
+      "id": "plan-platforms",
+      "name": "Plan platforms",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "has-targets",
+              "leftValue": "={{ $json.targets.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "any-platform-left",
+      "name": "Any platform left?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1300,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write one social media post per platform to promote this blog article.\n\nTitle: {{ $json.title }}\nArticle: {{ $json.articleText }}\n\nVoice: {{ $json.brandVoice }}\n\nPlatforms, with the length to aim for and the hard limit for each:\n{{ $json.targets.map(t => '- ' + t.platform + ': about ' + Math.min(Math.floor(t.maxLength * 0.8), 600) + ' characters, never more than ' + t.maxLength + (t.linkSupported ? '' : ' (links are not clickable there, so end with \"Link in bio.\")')).join('\\n') }}\n\nRules:\n- Write each post for that platform's audience. Don't post the same text everywhere.\n- Count characters. A post over its hard limit gets cut.\n- One idea per post, in plain words. Skip lists of every detail; the article has them.\n- Don't include the article URL: it is attached to the post.\n- Lead with the most useful idea from the article, not with \"New blog post\".\n- Write in the article's language.",
+        "hasOutputParser": true
+      },
+      "id": "write-the-posts",
+      "name": "Write the posts",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1520,
+        60
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "options": {}
+      },
+      "id": "openai-model",
+      "name": "OpenAI model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1500,
+        260
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "openAiCredential",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"posts\": [\n    {\n      \"platform\": \"bluesky\",\n      \"text\": \"Post text\"\n    }\n  ]\n}"
+      },
+      "id": "post-format",
+      "name": "Post format",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1680,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// One Ampost post with a text per platform. Ampost checks the limits again in the next step.\nconst plan = $('Plan platforms').item.json;\nconst written = $json.output?.posts ?? [];\nconst skipped = [...plan.skipped];\nconst options = {};\n\nfor (const target of plan.targets) {\n  let text = written.find((p) => String(p.platform).toLowerCase() === target.platform)?.text?.trim();\n  if (!text) {\n    skipped.push({ platform: target.platform, reason: 'the AI wrote no text for it' });\n    continue;\n  }\n  const chars = [...text];\n  if (chars.length > target.maxLength) {\n    // Cut at the last space that fits and add an ellipsis.\n    const cut = chars.slice(0, target.maxLength - 1).join('');\n    text = cut.slice(0, Math.max(cut.lastIndexOf(' '), 1)).trimEnd() + '…';\n  }\n  options[target.platform] = { text };\n}\n\nconst platforms = Object.keys(options);\nconst body = {\n  targets: [{ platforms }],\n  text: platforms.length ? options[platforms[0]].text : plan.title,\n  linkUrl: plan.link,\n  options,\n  metadata: { source: 'n8n blog template', article: plan.link },\n};\nif (plan.image) body.media = [{ url: plan.image, type: 'image' }];\nif (plan.whenToPost === 'queue') body.useQueue = true;\n\nreturn { json: { body, skipped } };"
+      },
+      "id": "build-the-post",
+      "name": "Build the post",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1860,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "validate",
+        "inputMode": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}"
+      },
+      "id": "check-with-ampost",
+      "name": "Check with Ampost",
+      "type": "n8n-nodes-ampost.ampost",
+      "typeVersion": 1,
+      "position": [
+        2080,
+        60
+      ],
+      "credentials": {
+        "ampostApi": {
+          "id": "ampostApiCredential",
+          "name": "Ampost account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Keep the platforms Ampost accepted and note why the others were left out.\nconst check = $json;\nconst built = $('Build the post').item.json;\nconst skipped = [...built.skipped];\nconst notes = [];\nconst accepted = [];\n\nconst plain = (e) =>\n  e.code === 'PLATFORM_NOT_CONNECTED' ? 'no connected account in Ampost' : e.message;\nfor (const target of check.targets ?? []) {\n  if (target.valid) accepted.push(target.platform);\n  else skipped.push({ platform: target.platform, reason: target.errors.map(plain).join('; ') });\n}\n\nconst body = JSON.parse(JSON.stringify(built.body));\nbody.targets = [{ platforms: accepted }];\nfor (const platform of Object.keys(body.options)) {\n  if (!accepted.includes(platform)) delete body.options[platform];\n}\nif (accepted.length) body.text = body.options[accepted[0]].text;\n\nconst general = check.errors ?? [];\nif (general.some((e) => e.code === 'QUEUE_EMPTY')) {\n  delete body.useQueue;\n  notes.push('Your Ampost queue has no time slots, so the post was saved as a draft. Add slots under Queue in Ampost.');\n}\nconst blocking = general.filter((e) => e.code !== 'QUEUE_EMPTY').map((e) => e.message);\n\nreturn { json: { body, platforms: accepted, skipped, notes, blocking } };"
+      },
+      "id": "sort-the-check-result",
+      "name": "Sort the check result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2280,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "has-platforms",
+              "leftValue": "={{ $json.platforms.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "nothing-blocking",
+              "leftValue": "={{ $json.blocking.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "anything-to-post",
+      "name": "Anything to post?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2480,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "inputMode": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}"
+      },
+      "id": "add-to-ampost",
+      "name": "Add to Ampost",
+      "type": "n8n-nodes-ampost.ampost",
+      "typeVersion": 1,
+      "position": [
+        2720,
+        40
+      ],
+      "credentials": {
+        "ampostApi": {
+          "id": "ampostApiCredential",
+          "name": "Ampost account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// One short report per article, whichever way the run went.\nconst from = (name) => {\n  try {\n    return $(name).item.json;\n  } catch {\n    return null;\n  }\n};\nconst plan = from('Plan platforms') ?? {};\nconst sorted = from('Sort the check result');\nconst built = from('Build the post');\nconst skipped = sorted?.skipped ?? built?.skipped ?? plan.skipped ?? [];\nconst notes = [...(sorted?.notes ?? [])];\nconst lines = [];\nlet outcome;\n\nif ($json.id && $json.status) {\n  const when = $json.scheduledFor ? 'scheduled for ' + $json.scheduledFor : $json.status;\n  outcome = 'Added to Ampost for ' + sorted.platforms.join(', ') + ' (' + when + ')';\n  lines.push(outcome + '.', 'Post ID: ' + $json.id);\n} else if ($json.error) {\n  outcome = 'Failed';\n  lines.push('The run failed: ' + (typeof $json.error === 'string' ? $json.error : JSON.stringify($json.error)));\n} else if (sorted?.blocking?.length) {\n  outcome = 'Not posted';\n  lines.push('Ampost refused the post: ' + sorted.blocking.join('; '));\n} else {\n  outcome = 'Not posted';\n  lines.push('No platform could take this article.');\n}\n\nif (skipped.length) {\n  lines.push('', 'Left out:');\n  for (const s of skipped) lines.push('- ' + s.platform + ': ' + s.reason);\n}\nif (notes.length) lines.push('', ...notes);\nlines.push('', 'Article: ' + (plan.link ?? ''));\n\nreturn {\n  json: {\n    to: plan.reportEmail,\n    subject: outcome + ': ' + (plan.title ?? 'blog article'),\n    text: lines.join('\\n'),\n  },\n};"
+      },
+      "id": "write-the-report",
+      "name": "Write the report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3040,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "n8n@example.com",
+        "toEmail": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailFormat": "text",
+        "text": "={{ $json.text }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "email-the-report",
+      "name": "Email the report",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        3240,
+        80
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "smtpCredential",
+          "name": "SMTP account"
+        }
+      },
+      "webhookId": "00000000-0000-4000-8000-000000000001"
+    }
+  ],
+  "connections": {
+    "New blog post": {
+      "main": [
+        [
+          {
+            "node": "Skip posted articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip posted articles": {
+      "main": [
+        [
+          {
+            "node": "Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Settings": {
+      "main": [
+        [
+          {
+            "node": "Get article page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get article page": {
+      "main": [
+        [
+          {
+            "node": "Get platform rules",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get platform rules": {
+      "main": [
+        [
+          {
+            "node": "Plan platforms",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan platforms": {
+      "main": [
+        [
+          {
+            "node": "Any platform left?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any platform left?": {
+      "main": [
+        [
+          {
+            "node": "Write the posts",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Write the report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write the posts": {
+      "main": [
+        [
+          {
+            "node": "Build the post",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Write the report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Write the posts",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post format": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Write the posts",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build the post": {
+      "main": [
+        [
+          {
+            "node": "Check with Ampost",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check with Ampost": {
+      "main": [
+        [
+          {
+            "node": "Sort the check result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Write the report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sort the check result": {
+      "main": [
+        [
+          {
+            "node": "Anything to post?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anything to post?": {
+      "main": [
+        [
+          {
+            "node": "Add to Ampost",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Write the report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add to Ampost": {
+      "main": [
+        [
+          {
+            "node": "Write the report",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Write the report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write the report": {
+      "main": [
+        [
+          {
+            "node": "Email the report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

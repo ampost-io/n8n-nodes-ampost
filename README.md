@@ -8,7 +8,7 @@ Discord from your workflows.
   slots and analytics. It can also be used as a tool by n8n's AI Agent.
 - **Ampost Trigger** node: starts a workflow when a post is published or fails, or when an account
   needs reconnecting. It registers its own webhook and checks each event's signature.
-- [Templates](#templates) for RSS, Google Sheets, AI posts with approval, YouTube and alerts.
+- [Templates](#templates) for blog posts written per platform by AI, RSS, Google Sheets, AI posts with approval, YouTube and alerts.
 
 No runtime dependencies. Built with [@n8n/node-cli](https://www.npmjs.com/package/@n8n/node-cli).
 
@@ -140,6 +140,7 @@ Ampost credential in the Ampost nodes. Each workflow has a note with its setup s
 
 | File | What it does |
 | --- | --- |
+| [`blog-to-platform-posts.json`](templates/blog-to-platform-posts.json) | For each new blog post, OpenAI writes a post per platform within its limits; Ampost checks it and queues it, and you get an email report |
 | [`post-to-social-media.json`](templates/post-to-social-media.json) | Post a text and a link to the platforms you list |
 | [`upload-image-and-post.json`](templates/upload-image-and-post.json) | Download an image, upload it to Ampost and post it |
 | [`rss-to-social-media.json`](templates/rss-to-social-media.json) | Share every new item of an RSS feed on all your accounts |
