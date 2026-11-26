@@ -103,7 +103,7 @@ export async function ampostApiRequest(
 function describeError(code: string | undefined, details: unknown): string | undefined {
 	const hints: Record<string, string> = {
 		INSUFFICIENT_SCOPE:
-			'The API key lacks the scope this operation needs. Edit the key in Ampost under Settings, API keys.',
+			'The API key lacks the scope this operation needs. Edit the key in Ampost under Setup → API keys.',
 		PLATFORM_SET_NOT_ALLOWED: 'The API key is restricted to other platform sets.',
 		UPGRADE_REQUIRED: 'This feature needs a paid Ampost plan.',
 		QUOTA_EXCEEDED: "The plan's monthly API requests are used up.",

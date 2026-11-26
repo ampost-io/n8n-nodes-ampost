@@ -25,7 +25,7 @@ export class AmpostApi implements ICredentialType {
 			default: '',
 			placeholder: 'amp_live_...',
 			description:
-				'Create a key in Ampost under Settings, API keys. Give it the scopes the workflow needs; the trigger needs webhooks:write.',
+				'Create a key in Ampost under Setup → API keys. Give it the scopes the workflow needs; the trigger needs webhooks:write.',
 		},
 		{
 			displayName: 'Base URL',

@@ -28,7 +28,7 @@ npm install n8n-nodes-ampost
 
 ## Credentials
 
-1. In Ampost, open [Settings, API keys](https://ampost.io/app/settings/api-keys?ref=github) and
+1. In Ampost, open [Setup → API keys](https://ampost.io/app/settings/api-keys?ref=github) and
    create a key. Pick the scopes the workflow needs (table below). A key can also be limited to some
    platform sets.
 2. In n8n, add an **Ampost API** credential and paste the key. Leave **Base URL** as
