@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-ampost",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "n8n nodes for Ampost: publish, schedule and track social media posts on Instagram, Facebook, Threads, X, YouTube, Bluesky and more",
   "license": "MIT",
   "homepage": "https://ampost.io/how-to/post-to-social-media-from-n8n?ref=github",

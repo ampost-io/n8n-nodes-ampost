@@ -83,13 +83,16 @@ going, turn on **Always Output Data** in the node's settings and check for an em
 - **When**: Publish Now, Schedule (a date, in the workflow's time zone unless it has an offset), Add
   to Queue (the set's next free slot) or Save as Draft.
 - **Additional Fields**: first comment, link, media (URLs, or **Media Items (JSON)**, which takes
-  the `files` of a Media: Upload result as is), media fit, metadata, more targets in other platform
-  sets, and an **Idempotency Key**. Set it to something unique to the post, such as
+  the `files` of a Media: Upload result as is), media fit, a **Thread** (follow-up posts on X,
+  Bluesky and Threads, each with text and media), metadata, more targets in other platform sets, and
+  an **Idempotency Key**. Set it to something unique to the post, such as
   `{{ $json.guid }}`, and a re-run or a retried item never posts twice: Ampost answers a repeated
   key with the first post for 24 hours.
-- **Platform Options**: per-platform text and settings, for example the YouTube title and privacy,
-  Instagram placement (feed, reel, story), the Pinterest board, TikTok privacy, the Telegram parse
-  mode.
+- **Platform Options**: every per-platform option of the API (`options.<platform>.<field>`) as its
+  own field, for example the YouTube title and privacy, Instagram placement, collaborators and user
+  tags, the Pinterest board, TikTok privacy, the Telegram parse mode, Discord embeds and polls, and
+  a per-platform thread on X, Bluesky and Threads. A test fails when the API gains an option the
+  node has no field for.
 
 **Media: Upload** sends the file to Ampost's storage and waits until Ampost has checked it, then
 returns `files[]` with the public URL, type, size and dimensions. Images (JPEG, PNG, WebP) and

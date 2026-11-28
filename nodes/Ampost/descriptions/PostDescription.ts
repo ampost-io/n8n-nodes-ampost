@@ -1,5 +1,6 @@
 import type { INodeProperties } from 'n8n-workflow';
 import { platformOptionProperties } from './platformOptions';
+import { threadProperty } from './structuredFields';
 import {
 	paginationFields,
 	PLATFORM_OPTIONS,
@@ -82,7 +83,14 @@ const postIdField: INodeProperties = {
 	type: 'string',
 	required: true,
 	default: '',
-	displayOptions: showFor('post', ['get', 'delete', 'publish', 'retry', 'unpublish', 'editPublished']),
+	displayOptions: showFor('post', [
+		'get',
+		'delete',
+		'publish',
+		'retry',
+		'unpublish',
+		'editPublished',
+	]),
 	description: 'ID of the post, as returned by Create or Get Many',
 };
 
@@ -97,8 +105,7 @@ const composeFields: INodeProperties[] = [
 			{
 				name: 'JSON',
 				value: 'json',
-				description:
-					'Send the whole request body, as in the API reference (threads, user tags, Discord embeds)',
+				description: 'Send the whole request body, as in the API reference',
 			},
 		],
 		default: 'fields',
@@ -308,6 +315,12 @@ const composeFields: INodeProperties[] = [
 					},
 				],
 			},
+			threadProperty({
+				displayName: 'Thread',
+				name: 'thread',
+				description:
+					'Follow-up posts published right after the post, in order, each replying to the one before (X, Bluesky, Threads), up to 25. Every chosen platform must take a thread; set another per platform under Platform Options. Not with First Comment on one platform.',
+			}),
 		],
 	},
 	{

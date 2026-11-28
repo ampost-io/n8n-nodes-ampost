@@ -48,6 +48,127 @@ test('buildPlatformOptions groups fields by platform and converts lists', () => 
 	);
 });
 
+test('buildPlatformOptions converts threads, user tags, embeds and polls', () => {
+	assert.deepEqual(
+		buildPlatformOptions({
+			twitter__thread: {
+				items: [
+					{
+						text: 'Part 2',
+						mediaUrl: 'https://example.com/a.png',
+						mediaType: 'image',
+						altText: 'A',
+					},
+					{
+						text: 'Part 3',
+						mediaUrl: '',
+						mediaType: 'image',
+						altText: '',
+						mediaJson: '[{"url":"https://example.com/b.mp4","type":"video"}]',
+					},
+				],
+			},
+			bluesky__thread: {},
+			instagram__userTags: {
+				tags: [
+					{ username: '@alice', x: '0.25', y: '0.5', mediaIndex: 1 },
+					{ username: 'bob', x: '', y: '', mediaIndex: 0 },
+					{ username: '', x: '0.1', y: '0.1', mediaIndex: 0 },
+				],
+			},
+			discord__embeds: {
+				embeds: [
+					{
+						title: 'Launch',
+						description: '',
+						url: 'https://example.com',
+						color: '5793266',
+						imageUrl: '',
+						fieldsJson: '[{"name":"Price","value":"$9","inline":true}]',
+					},
+					{ title: '', description: 'Hex color', color: '#5865F2', fieldsJson: '' },
+				],
+			},
+			discord__poll: {
+				poll: {
+					question: 'Which?',
+					answers: 'A\n B \n\nC',
+					durationHours: 48,
+					allowMultiselect: false,
+				},
+			},
+			telegram__parseMode: 'HTML',
+		}),
+		{
+			twitter: {
+				thread: [
+					{
+						text: 'Part 2',
+						media: [{ url: 'https://example.com/a.png', type: 'image', altText: 'A' }],
+					},
+					{ text: 'Part 3', media: [{ url: 'https://example.com/b.mp4', type: 'video' }] },
+				],
+			},
+			bluesky: { thread: [] },
+			instagram: {
+				userTags: [{ username: 'alice', x: 0.25, y: 0.5, mediaIndex: 1 }, { username: 'bob' }],
+			},
+			discord: {
+				embeds: [
+					{
+						title: 'Launch',
+						url: 'https://example.com',
+						color: 5793266,
+						fields: [{ name: 'Price', value: '$9', inline: true }],
+					},
+					{ description: 'Hex color', color: '#5865F2' },
+				],
+				poll: { question: 'Which?', answers: ['A', 'B', 'C'], durationHours: 48 },
+			},
+			telegram: { parseMode: 'HTML' },
+		},
+	);
+	// Empty structured fields send nothing.
+	assert.deepEqual(
+		buildPlatformOptions({
+			instagram__userTags: {},
+			discord__embeds: {},
+			discord__poll: { poll: { question: '', answers: '' } },
+		}),
+		{},
+	);
+});
+
+test('buildPostBody sends the top-level thread and refuses bad JSON in structured fields', () => {
+	const params = {
+		inputMode: 'fields',
+		platforms: ['bluesky'],
+		text: 'Part 1',
+		publishMode: 'draft',
+		additionalFields: {
+			mediaFit: 'crop',
+			thread: { items: [{ text: 'Part 2', mediaUrl: '', mediaType: 'image', altText: '' }] },
+		},
+	};
+	assert.deepEqual(buildPostBody(createContext({ params }), 0), {
+		targets: [{ platforms: ['bluesky'] }],
+		text: 'Part 1',
+		mediaFit: 'crop',
+		thread: [{ text: 'Part 2' }],
+	});
+	const bad = [
+		{ additionalFields: { thread: { items: [{ text: 'x', mediaJson: '{oops' }] } } },
+		{ platformOptions: { discord__embeds: { embeds: [{ title: 'x', fieldsJson: '[1]' }] } } },
+		{ platformOptions: { instagram__userTags: { tags: [{ username: 'a', x: 'left' }] } } },
+	];
+	for (const extra of bad) {
+		assert.throws(
+			() => buildPostBody(createContext({ params: { ...params, ...extra } }), 0),
+			NodeOperationError,
+		);
+	}
+});
+
 test('buildPostBody turns the fields into a POST /api/posts body', () => {
 	const ctx = createContext({
 		timezone: 'Europe/Warsaw',
@@ -209,9 +330,14 @@ test('post operations call the right endpoints', async () => {
 test('account disconnect deletes the account', async () => {
 	const ctx = createContext({
 		params: { accountId: 'a/1' },
-		respond: routes({ 'DELETE /api/accounts/a%2F1': ok({ status: 'revoked', providerRevoked: true }) }),
+		respond: routes({
+			'DELETE /api/accounts/a%2F1': ok({ status: 'revoked', providerRevoked: true }),
+		}),
 	});
-	assert.deepEqual(await runOperation(ctx, 'account', 'disconnect', 0), { status: 'revoked', providerRevoked: true });
+	assert.deepEqual(await runOperation(ctx, 'account', 'disconnect', 0), {
+		status: 'revoked',
+		providerRevoked: true,
+	});
 	assert.equal(ctx.requests[0].method, 'DELETE');
 });
 
@@ -222,7 +348,10 @@ test('post edit published sends only the text when no account is picked, and ref
 	});
 	await runOperation(ctx, 'post', 'editPublished', 0);
 	assert.deepEqual(ctx.requests[0].body, { text: 'New' });
-	const empty = createContext({ params: { postId: 'p1', accountIds: [], newText: '  ' }, respond: routes({}) });
+	const empty = createContext({
+		params: { postId: 'p1', accountIds: [], newText: '  ' },
+		respond: routes({}),
+	});
 	await assert.rejects(runOperation(empty, 'post', 'editPublished', 0), /New Text is empty/);
 	assert.equal(empty.requests.length, 0);
 });

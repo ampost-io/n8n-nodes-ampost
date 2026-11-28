@@ -1,4 +1,10 @@
 import type { IDataObject, INodeProperties } from 'n8n-workflow';
+import {
+	type Fail,
+	STRUCTURED_PROPERTIES,
+	type StructuredKind,
+	toStructuredValue,
+} from './structuredFields';
 
 /**
  * Per-platform settings of a post (`options.<platform>.<field>` in the API).
@@ -6,7 +12,7 @@ import type { IDataObject, INodeProperties } from 'n8n-workflow';
  * `<platform>__<field>` and labelled "<Platform>: <Field>", so the user adds
  * only the ones they need and nothing else is sent.
  */
-type FieldKind = 'string' | 'boolean' | 'number' | 'list' | { options: string[] };
+type FieldKind = 'string' | 'boolean' | 'number' | 'list' | StructuredKind | { options: string[] };
 
 interface PlatformField {
 	platform: string;
@@ -42,6 +48,7 @@ const FIRST_COMMENT_PLATFORMS = [
 	'twitter',
 	'youtube',
 ];
+const THREAD_PLATFORMS = ['bluesky', 'threads', 'twitter'];
 
 const FIELDS: PlatformField[] = [
 	...Object.keys(PLATFORM_LABELS).map(
@@ -358,6 +365,39 @@ const FIELDS: PlatformField[] = [
 		kind: 'string',
 		description: 'Pin title, up to 100 characters',
 	},
+	{
+		platform: 'instagram',
+		field: 'userTags',
+		label: 'User Tags',
+		kind: 'userTags',
+		description:
+			'People tagged, up to 20 per media item. X and Y (0-1 from the top left) are required on images, optional on stories, none on reels.',
+	},
+	{
+		platform: 'discord',
+		field: 'embeds',
+		label: 'Embeds',
+		kind: 'embeds',
+		description:
+			'Rich embeds under the message, up to 10. Each needs a title, description, image or fields; all together at most 6000 characters.',
+	},
+	{
+		platform: 'discord',
+		field: 'poll',
+		label: 'Poll',
+		kind: 'poll',
+		description: 'A poll under the message; it cannot be edited later',
+	},
+	...THREAD_PLATFORMS.map(
+		(platform): PlatformField => ({
+			platform,
+			field: 'thread',
+			label: 'Thread',
+			kind: 'thread',
+			description:
+				"This platform's thread instead of the post's Thread, up to 25 follow-up posts. Added with no items: no thread here. Not with a first comment.",
+		}),
+	),
 ];
 
 const SEPARATOR = '__';
@@ -368,6 +408,9 @@ function toProperty(spec: PlatformField): INodeProperties {
 		name: `${spec.platform}${SEPARATOR}${spec.field}`,
 		description: spec.description,
 	};
+	if (typeof spec.kind === 'string' && spec.kind in STRUCTURED_PROPERTIES) {
+		return STRUCTURED_PROPERTIES[spec.kind as StructuredKind](base);
+	}
 	if (typeof spec.kind === 'object') {
 		return {
 			...base,
@@ -390,11 +433,30 @@ function toProperty(spec: PlatformField): INodeProperties {
 			};
 		case 'list':
 			return { ...base, type: 'string', default: '' };
+		default:
+			throw new Error(`Unknown field kind of ${base.name}`);
 	}
 }
 
 export const platformOptionProperties: INodeProperties[] = FIELDS.map(toProperty).sort((a, b) =>
 	a.displayName.localeCompare(b.displayName),
+);
+
+const STRUCTURED_FIELDS = new Map(
+	FIELDS.filter((spec) => typeof spec.kind === 'string' && spec.kind in STRUCTURED_PROPERTIES).map(
+		(spec) => [
+			`${spec.platform}${SEPARATOR}${spec.field}`,
+			{
+				kind: spec.kind as StructuredKind,
+				label: `${PLATFORM_LABELS[spec.platform]}: ${spec.label}`,
+			},
+		],
+	),
+);
+
+/** Every `options.<platform>.<field>` this node has a field for, e.g. `tiktok.privacyLevel`. */
+export const PLATFORM_OPTION_PATHS: string[] = FIELDS.map(
+	(spec) => `${spec.platform}.${spec.field}`,
 );
 
 const LIST_FIELDS = new Set(
@@ -403,8 +465,11 @@ const LIST_FIELDS = new Set(
 	),
 );
 
-/** `{ "tiktok__privacyLevel": "SELF_ONLY" }` → `{ tiktok: { privacyLevel: "SELF_ONLY" } }`. */
-export function buildPlatformOptions(values: IDataObject): IDataObject {
+/**
+ * `{ "tiktok__privacyLevel": "SELF_ONLY" }` → `{ tiktok: { privacyLevel: "SELF_ONLY" } }`.
+ * `fail` reports bad input in a structured field (thread, user tags, embeds).
+ */
+export function buildPlatformOptions(values: IDataObject, fail: Fail): IDataObject {
 	const options: Record<string, IDataObject> = {};
 	for (const [name, value] of Object.entries(values)) {
 		const [platform, field] = name.split(SEPARATOR);
@@ -412,7 +477,11 @@ export function buildPlatformOptions(values: IDataObject): IDataObject {
 		// An empty first comment means "none on this platform"; any other empty field is unset.
 		if (value === '' && field !== 'firstComment') continue;
 		let converted: unknown = value;
-		if (LIST_FIELDS.has(name)) {
+		const structured = STRUCTURED_FIELDS.get(name);
+		if (structured) {
+			converted = toStructuredValue(structured.kind, value, structured.label, fail);
+			if (converted === undefined) continue;
+		} else if (LIST_FIELDS.has(name)) {
 			converted = String(value)
 				.split(',')
 				.map((entry) => entry.trim().replace(/^@/, ''))

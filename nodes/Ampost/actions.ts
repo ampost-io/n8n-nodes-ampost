@@ -1,6 +1,7 @@
 import type { IDataObject, IExecuteFunctions } from 'n8n-workflow';
 import { NodeOperationError, sleep } from 'n8n-workflow';
 import { buildPlatformOptions } from './descriptions/platformOptions';
+import { toThreadItems } from './descriptions/structuredFields';
 import { ampostApiRequest, ampostApiRequestAllItems, compact } from './transport';
 
 /** What the media upload accepts (`limits.mimeTypes` of POST /api/media/uploads). */
@@ -187,8 +188,15 @@ export function buildPostBody(ctx: IExecuteFunctions, itemIndex: number): IDataO
 		if (Object.keys(metadata).length > 0) body.metadata = metadata as IDataObject;
 	}
 
+	const fail = (message: string): never => {
+		throw new NodeOperationError(ctx.getNode(), message, { itemIndex });
+	};
+	const thread = toThreadItems(fields.thread, 'Thread', fail);
+	if (thread.length > 0) body.thread = thread;
+
 	const options = buildPlatformOptions(
 		ctx.getNodeParameter('platformOptions', itemIndex, {}) as IDataObject,
+		fail,
 	);
 	if (Object.keys(options).length > 0) body.options = options;
 
